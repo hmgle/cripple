@@ -2,6 +2,27 @@
 
 #define IS_LO_IP(addr) (((addr) & 0xFF) == 127)
 
+int init_server_UDP_fd(int port, uint32_t ipaddr)
+{
+	int fd;
+	struct sockaddr_in addr;
+	int ret;
+
+	fd = socket(AF_INET, SOCK_DGRAM, 0);
+	if (fd == -1)
+		return -1;
+	addr.sin_family = AF_INET;
+	addr.sin_port = htons(port);
+	if (ipaddr != 0)
+		addr.sin_addr.s_addr = ipaddr;
+	else
+		addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	ret = bind(fd, (struct sockaddr*)&addr, sizeof(addr));
+	if (ret == -1)
+		return -1;
+	return fd;
+}
+
 /* On error: return 0 */
 uint32_t get_first_network_addr(void)
 {
