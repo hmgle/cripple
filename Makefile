@@ -4,7 +4,7 @@ TARGET = server client
 
 all:: $(TARGET)
 
-server: server.o
+server: server.o utils.o
 	$(CC) $(CFLAGS) $^ -o $@ -lnet -lev
 
 client: client.o
