@@ -5,7 +5,7 @@ TARGET = server client
 all:: $(TARGET)
 
 server: server.o
-	$(CC) $(CFLAGS) $^ -o $@ -lnet
+	$(CC) $(CFLAGS) $^ -o $@ -lnet -lev
 
 client: client.o
 	$(CC) $(CFLAGS) $^ -o $@
