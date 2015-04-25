@@ -62,10 +62,58 @@ static ssize_t attach_mapped_addr_attr(uint8_t *buf_end,
 	buf_end[5] = 0x01;
 	/* Port */
 	uint16_t port = ntohs(addr->sin_port);
+	buf_end[6] = (port >> 8) & 0xff;
+	buf_end[7] = port & 0xff;
+	/* IP */
+	uint32_t ip = ntohl(addr->sin_addr.s_addr);
+	buf_end[8] = (ip >> 24) & 0xff;
+	buf_end[9] = (ip >> 16) & 0xff;
+	buf_end[10] = (ip >> 8) & 0xff;
+	buf_end[11] = ip & 0xff;
+	return 12;
+}
+
+static ssize_t attach_source_addr_attr(uint8_t *buf_end,
+				const struct stun_address4 *addr)
+{
+	/* attribute type: SOURCE-ADDRESS 0x0004 */
+	buf_end[0] = 0x0;
+	buf_end[1] = 0x04;
+	/* attribute length: 0x0008 */
+	buf_end[2] = 0x0;
+	buf_end[3] = 0x08;
+	/* protocol family: IPv4(0x0001) */
+	buf_end[4] = 0x0;
+	buf_end[5] = 0x01;
+	/* Port */
+	uint16_t port = ntohs(addr->port);
 	buf_end[6] = port & 0xff;
 	buf_end[7] = (port >> 8) & 0xff;
 	/* IP */
-	uint32_t ip = ntohl(addr->sin_addr.s_addr);
+	uint32_t ip = ntohl(addr->ip);
+	buf_end[8] = (ip >> 24) & 0xff;
+	buf_end[9] = (ip >> 16) & 0xff;
+	buf_end[10] = (ip >> 8) & 0xff;
+	buf_end[11] = ip & 0xff;
+	return 12;
+}
+
+static ssize_t attach_changed_addr_attr(uint8_t *buf_end,
+				uint16_t port, uint32_t ip)
+{
+	/* attribute type: CHANGED-ADDRESS 0x0005 */
+	buf_end[0] = 0x0;
+	buf_end[1] = 0x05;
+	/* attribute length: 0x0008 */
+	buf_end[2] = 0x0;
+	buf_end[3] = 0x08;
+	/* protocol family: IPv4(0x0001) */
+	buf_end[4] = 0x0;
+	buf_end[5] = 0x01;
+	/* Port */
+	buf_end[6] = (port >> 8) & 0xff;
+	buf_end[7] = port & 0xff;
+	/* IP */
 	buf_end[8]  = ip & 0xff;
 	buf_end[9]  = (ip >> 8) & 0xff;
 	buf_end[10] = (ip >> 16) & 0xff;
@@ -81,6 +129,7 @@ static ssize_t set_binding_resp(uint8_t *resp, const struct stun_ctx *server,
 	int i;
 	int arrsize;
 	uint8_t *pos;
+	ssize_t ret;
 
 	resp[0] = 0x01;
 	resp[1] = 0x01;
@@ -88,8 +137,21 @@ static ssize_t set_binding_resp(uint8_t *resp, const struct stun_ctx *server,
 	for (i = 0; i < arrsize; i++)
 		resp[4 + i] = from_hdr->transaction_id[i];
 	pos = resp + 4 + i;
-	ssize_t ret = attach_mapped_addr_attr(pos, from);
+	ret = attach_mapped_addr_attr(pos, from);
 	pos += ret;
+	ret = attach_source_addr_attr(pos, &server->addr);
+	pos += ret;
+	/* test */
+	uint32_t change_ip;
+	if ((server->addr.ip & 0xff) < 0xfe)
+		change_ip = server->addr.ip + 0x1000000;
+	else
+		change_ip = server->addr.ip - 0x1000000;
+	ret = attach_changed_addr_attr(pos, server->addr.port + 1, change_ip);
+	pos += ret;
+	ssize_t len = pos - resp - 20;
+	resp[2] = (len >> 8) & 0xff;
+	resp[3] = len & 0xff;
 	return pos - resp;
 }
 
