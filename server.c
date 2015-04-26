@@ -10,10 +10,6 @@
 #include "utils.h"
 #include "bithacks.h"
 
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
-#endif
-
 #define STUN_PORT 3478
 
 struct stun_address4 {
@@ -159,8 +155,8 @@ static void read_cb(EV_P_ ev_io *w, int revents)
 {
 	struct stun_ctx *server = (typeof(server))w;
 	ssize_t len;
-	struct sockaddr_in from;
 	struct stun_msg_hdr msg_hdr;
+	struct sockaddr_in from;
 	int fromlen = sizeof(from);
 
 	len = recvfrom(server->fd, server->buf, STUN_MAX_MESSAGE_SIZE, 0,

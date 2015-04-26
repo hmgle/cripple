@@ -9,6 +9,10 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
+#endif
+
 int init_server_UDP_fd(int port, uint32_t ipaddr);
 
 /* On error: return 0 */

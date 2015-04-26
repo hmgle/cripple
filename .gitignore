@@ -7,3 +7,5 @@ cscope.out
 cscope.po.out
 tags
 
+*.log
+*.tmp
