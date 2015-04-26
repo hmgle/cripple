@@ -5,6 +5,8 @@
 
 #include "utils.h"
 
+#define SERVER_PORT 7899
+
 struct forge_ip_server_ctx {
 	ev_io io;
 	int fd;
@@ -42,7 +44,7 @@ int main(int argc, char **argv)
 	struct forge_ip_server_ctx s;
 	struct ev_loop *loop = EV_DEFAULT;
 
-	s.fd = init_server_UDP_fd(7899, 0);
+	s.fd = init_server_UDP_fd(SERVER_PORT, 0);
 	assert(s.fd > 0);
 
 	ev_io_init(&s.io, forge_ip_read_cb, s.fd, EV_READ);

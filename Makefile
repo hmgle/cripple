@@ -15,7 +15,7 @@ client: client.o
 client_getchangeip_test: client_getchangeip_test.o
 	$(CC) $(CFLAGS) $^ -o $@ `pkg-config openssl --libs`
 
-forge_ip_client: forge_ip_client.o
+forge_ip_client: forge_ip_client.o utils.o
 	$(CC) $(CFLAGS) $^ -o $@ -lnet
 
 forge_ip_server: forge_ip_server.o utils.o
