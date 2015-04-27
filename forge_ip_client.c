@@ -10,14 +10,16 @@
 #define SERVER_PORT 7899
 #define CLIENT_PORT 7999
 
-static int send_forged_addr_msg(libnet_t *l,
-				const struct sockaddr_in *forged,
+static int send_forged_addr_msg(const struct sockaddr_in *forged,
 				const struct sockaddr_in *real,
 				const struct sockaddr_in *dest)
 {
 	int packet_size = 0;
 	uint8_t buf[128];
 	libnet_ptag_t ret;
+	char errbuf[LIBNET_ERRBUF_SIZE];
+	libnet_t *l = libnet_init(LIBNET_RAW4, NULL, errbuf);
+	assert(l != NULL);
 
 	packet_size += LIBNET_UDP_H;
 	/* store real addr port */
@@ -45,6 +47,7 @@ static int send_forged_addr_msg(libnet_t *l,
 		fprintf(stderr, "libnet_write fail: %s\n", libnet_geterror(l));
 		return -1;
 	}
+	libnet_destroy(l);
 	return 0;
 }
 
@@ -65,7 +68,6 @@ int main(int argc, char **argv)
 {
 	int cli_fd;
 	int opt, index;
-	char errbuf[LIBNET_ERRBUF_SIZE];
 	uint8_t buf[256];
 	struct sockaddr_in to;
 	struct sockaddr_in real;
@@ -129,30 +131,34 @@ int main(int argc, char **argv)
 	forged.sin_port = forged_port;
 	inet_pton(AF_INET, forged_ip, &forged.sin_addr);
 
-	libnet_t *l = libnet_init(LIBNET_RAW4, NULL, errbuf);
-	assert(l != NULL);
-	ret = send_forged_addr_msg(l, &forged, &real, &to);
-	if (ret < 0)
-		exit(1);
 	cli_fd = socket(AF_INET, SOCK_DGRAM, 0);
 	if (cli_fd < 0) {
 		perror("socket");
 		exit(1);
 	}
 	struct timeval timeout = {
-		.tv_sec = 3,
+		.tv_sec = 2,
 		.tv_usec = 0,
 	};
 	setsockopt(cli_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
 	ret = bind(cli_fd, (struct sockaddr*)&real, sizeof(real));
 	struct sockaddr_in from;
 	int fromlen = sizeof(from);
-	ret = recvfrom(cli_fd, buf, 127, 0,
-		       (struct sockaddr *)&from, (socklen_t *)&fromlen);
-	if (ret <= 0)
-		return -1;
-	buf[ret] = '\0';
-	printf("%s\n", buf);
-	libnet_destroy(l);
-	return 0;
+	int try_count = 3;
+	do {
+		ret = send_forged_addr_msg(&forged, &real, &to);
+		if (ret < 0) {
+			fprintf(stderr, "send_forged_addr_msg fail\n");
+			exit(1);
+		}
+		ret = recvfrom(cli_fd, buf, 127, 0,
+			       (struct sockaddr *)&from, (socklen_t *)&fromlen);
+		if (ret <= 0)
+			continue;
+		buf[ret] = '\0';
+		printf("%s\n", buf);
+		return 0;
+	} while (--try_count > 0);
+	fprintf(stderr, "Block!\n");
+	return -1;
 }
