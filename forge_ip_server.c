@@ -33,7 +33,7 @@ static void forge_ip_read_cb(EV_P_ ev_io *w, int revents)
 	fprintf(stderr, "real source port: %d ip: %s\n",
 			real_source.sin_port, &s->buf[2]);
 	len = sprintf((char *)s->buf, "forget source port: %d ip: %s\n",
-			from.sin_port, inet_ntoa(from.sin_addr));
+			ntohs(from.sin_port), inet_ntoa(from.sin_addr));
 	fprintf(stderr, "%s", s->buf);
 	sendto(s->fd, s->buf, len, 0,
 		(const struct sockaddr *)&real_source, sizeof(real_source));
