@@ -23,19 +23,19 @@ static int send_forged_addr_msg(libnet_t *l,
 	/* store real addr port */
 	buf[0] = (real->sin_port >> 8) & 0xff;
 	buf[1] = real->sin_port & 0xff;
-	int buf_size = sprintf((char *)buf + 2, "%s", inet_ntoa(real->sin_addr));
+	int buf_size = sprintf((char *)buf+2, "%s", inet_ntoa(real->sin_addr));
 	buf_size += 2;
 	packet_size += buf_size;
 	ret = libnet_build_udp(forged->sin_port, dest->sin_port, packet_size, 0,
-			 buf, buf_size, l, 0);
+				buf, buf_size, l, 0);
 	if (ret < 0) {
 		fprintf(stderr, "libnet_build_udp() fail: %s\n",
 				libnet_geterror(l));
 		return -1;
 	}
 	ret = libnet_build_ipv4(packet_size + LIBNET_IPV4_H, 0, 0, 0, 255,
-			  IPPROTO_UDP, 0, forged->sin_addr.s_addr,
-			  dest->sin_addr.s_addr, NULL, 0, l, 0);
+				IPPROTO_UDP, 0, forged->sin_addr.s_addr,
+				dest->sin_addr.s_addr, NULL, 0, l, 0);
 	if (ret < 0) {
 		fprintf(stderr, "libnet_build_ipv4() fail: %s\n",
 				libnet_geterror(l));
@@ -66,6 +66,7 @@ int main(int argc, char **argv)
 	int cli_fd;
 	int opt, index;
 	char errbuf[LIBNET_ERRBUF_SIZE];
+	uint8_t buf[256];
 	struct sockaddr_in to;
 	struct sockaddr_in real;
 	struct sockaddr_in forged;
@@ -128,17 +129,30 @@ int main(int argc, char **argv)
 	forged.sin_port = forged_port;
 	inet_pton(AF_INET, forged_ip, &forged.sin_addr);
 
-	cli_fd = socket(AF_INET, SOCK_DGRAM, 0);
-	if (cli_fd < 0) {
-		perror("socket");
-		exit(1);
-	}
 	libnet_t *l = libnet_init(LIBNET_RAW4, NULL, errbuf);
 	assert(l != NULL);
 	ret = send_forged_addr_msg(l, &forged, &real, &to);
 	if (ret < 0)
 		exit(1);
-	/* TODO: recv */
+	cli_fd = socket(AF_INET, SOCK_DGRAM, 0);
+	if (cli_fd < 0) {
+		perror("socket");
+		exit(1);
+	}
+	struct timeval timeout = {
+		.tv_sec = 3,
+		.tv_usec = 0,
+	};
+	setsockopt(cli_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+	ret = bind(cli_fd, (struct sockaddr*)&real, sizeof(real));
+	struct sockaddr_in from;
+	int fromlen = sizeof(from);
+	ret = recvfrom(cli_fd, buf, 127, 0,
+		       (struct sockaddr *)&from, (socklen_t *)&fromlen);
+	if (ret <= 0)
+		return -1;
+	buf[ret] = '\0';
+	printf("%s\n", buf);
 	libnet_destroy(l);
 	return 0;
 }

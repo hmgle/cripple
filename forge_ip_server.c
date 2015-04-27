@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <string.h>
 #include <arpa/inet.h>
+#include <errno.h>
 
 #include "utils.h"
 
@@ -29,12 +30,20 @@ static void forge_ip_read_cb(EV_P_ ev_io *w, int revents)
 	memset(&real_source, 0, sizeof(real_source));
 	real_source.sin_family = AF_INET;
 	real_source.sin_port = (s->buf[0] << 8) + s->buf[1];
-	inet_pton(AF_INET, (char *)&s->buf[2], &real_source.sin_addr);
-	fprintf(stderr, "real source port: %d ip: %s\n",
+	if (inet_pton(AF_INET, (char *)&s->buf[2],
+				&real_source.sin_addr) <= 0) {
+		fprintf(stderr, "inet_pton() fail: %s\n", strerror(errno));
+		fprintf(stderr, "from: %s\n", inet_ntoa(from.sin_addr));
+		fprintf(stderr, "buf: %s\n", s->buf);
+		return;
+	}
+	fprintf(stderr, "========================================\n"
+			"real source port: %d ip: %s\n",
 			real_source.sin_port, &s->buf[2]);
-	len = sprintf((char *)s->buf, "forget source port: %d ip: %s\n",
+	len = sprintf((char *)s->buf, "forged source port: %d ip: %s\n",
 			ntohs(from.sin_port), inet_ntoa(from.sin_addr));
-	fprintf(stderr, "%s", s->buf);
+	fprintf(stderr, "%s========================================\n\n",
+		s->buf);
 	sendto(s->fd, s->buf, len, 0,
 		(const struct sockaddr *)&real_source, sizeof(real_source));
 }
