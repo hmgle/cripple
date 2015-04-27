@@ -24,6 +24,7 @@ static int send_forged_addr_msg(libnet_t *l,
 	buf[0] = (real->sin_port >> 8) & 0xff;
 	buf[1] = real->sin_port & 0xff;
 	int buf_size = sprintf((char *)buf + 2, "%s", inet_ntoa(real->sin_addr));
+	buf_size += 2;
 	packet_size += buf_size;
 	ret = libnet_build_udp(forged->sin_port, dest->sin_port, packet_size, 0,
 			 buf, buf_size, l, 0);
