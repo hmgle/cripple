@@ -39,15 +39,13 @@ struct stun_ctx {
 static void stun_msg_hdr_parse(const uint8_t *msg, ssize_t len,
 				struct stun_msg_hdr *hdr)
 {
-	int i;
 	int arrsize;
 
-	assert(len < 20);
+	assert(len >= 20);
 	hdr->type = msg[1] + (msg[0] << 8);
 	hdr->len = msg[3] + (msg[2] << 8);
 	arrsize = ARRAY_SIZE(hdr->transaction_id);
-	for (i = 0; i < arrsize; i++)
-		hdr->transaction_id[i] = msg[4 + i];
+	memcpy(hdr->transaction_id, msg + 4, arrsize);
 }
 
 static int get_change_request_attr(const uint8_t *msg, ssize_t len,
@@ -157,7 +155,6 @@ static ssize_t set_binding_resp(uint8_t *resp, const struct stun_ctx *server,
 				const struct stun_msg_hdr *from_hdr,
 				const struct sockaddr_in *from)
 {
-	int i;
 	int arrsize;
 	uint8_t *pos;
 	ssize_t ret;
@@ -165,9 +162,8 @@ static ssize_t set_binding_resp(uint8_t *resp, const struct stun_ctx *server,
 	resp[0] = 0x01;
 	resp[1] = 0x01;
 	arrsize = ARRAY_SIZE(from_hdr->transaction_id);
-	for (i = 0; i < arrsize; i++)
-		resp[4 + i] = from_hdr->transaction_id[i];
-	pos = resp + 4 + i;
+	memcpy(resp + 4, from_hdr->transaction_id, arrsize);
+	pos = resp + 4 + arrsize;
 	ret = attach_mapped_addr_attr(pos, from);
 	pos += ret;
 	ret = attach_source_addr_attr(pos, &server->addr);
@@ -213,6 +209,7 @@ static int set_forgedip_binding_resp(const struct stun_ctx *server,
 	resp[2] = (len >> 8) & 0xff;
 	resp[3] = len & 0xff;
 	packet_size += len;
+	fprintf(stderr, "from->sin_port: %d\n", from->sin_port);
 	ret = libnet_build_udp(FORGED_PORT, from->sin_port, packet_size, 0,
 			       resp, len, l, 0);
 	if (ret < 0) {
