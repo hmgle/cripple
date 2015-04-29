@@ -209,8 +209,7 @@ static int set_forgedip_binding_resp(const struct stun_ctx *server,
 	resp[2] = (len >> 8) & 0xff;
 	resp[3] = len & 0xff;
 	packet_size += len;
-	fprintf(stderr, "from->sin_port: %d\n", from->sin_port);
-	ret = libnet_build_udp(FORGED_PORT, from->sin_port, packet_size, 0,
+	ret = libnet_build_udp(FORGED_PORT, htons(from->sin_port), packet_size, 0,
 			       resp, len, l, 0);
 	if (ret < 0) {
 		fprintf(stderr, "libnet_build_udp() fail: %s\n",
