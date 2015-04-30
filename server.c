@@ -15,7 +15,6 @@
 #define STUN_PORT 3478
 
 static uint32_t FORGED_IP;
-static uint16_t FORGED_PORT;
 
 struct stun_address4 {
 	uint32_t ip;
@@ -31,8 +30,8 @@ struct stun_ctx {
 	 */
 	ev_io io;
 	struct stun_address4 addr;
+	struct stun_address4 change_addr;
 	int fd;
-	struct stun_ctx *another;
 	uint8_t buf[STUN_MAX_MESSAGE_SIZE];
 };
 
@@ -169,7 +168,8 @@ static ssize_t set_binding_resp(uint8_t *resp, const struct stun_ctx *server,
 	ret = attach_source_addr_attr(pos, &server->addr);
 	pos += ret;
 	/* test */
-	ret = attach_changed_addr_attr(pos, FORGED_PORT, FORGED_IP);
+	ret = attach_changed_addr_attr(pos, server->change_addr.port,
+					server->change_addr.ip);
 	pos += ret;
 	ssize_t len = pos - resp - 20;
 	resp[2] = (len >> 8) & 0xff;
@@ -179,7 +179,8 @@ static ssize_t set_binding_resp(uint8_t *resp, const struct stun_ctx *server,
 
 static int set_forgedip_binding_resp(const struct stun_ctx *server,
 				     const struct stun_msg_hdr *from_hdr,
-				     const struct sockaddr_in *from)
+				     const struct sockaddr_in *from,
+				     int is_forge_ip, int is_forge_port)
 {
 	uint8_t resp[2048];
 	char errbuf[LIBNET_ERRBUF_SIZE];
@@ -188,10 +189,16 @@ static int set_forgedip_binding_resp(const struct stun_ctx *server,
 	int arrsize;
 	uint8_t *pos;
 	ssize_t ret;
-	struct stun_address4 forged_addr = {
-		.ip = FORGED_IP,
-		.port = FORGED_PORT,
-	};
+	struct stun_address4 forged_addr;
+
+	if (is_forge_ip)
+		forged_addr.ip = server->change_addr.ip;
+	else
+		forged_addr.ip = server->addr.ip;
+	if (is_forge_port)
+		forged_addr.port = server->change_addr.port;
+	else
+		forged_addr.port = server->addr.port;
 
 	packet_size += LIBNET_UDP_H;
 	resp[0] = 0x01;
@@ -209,15 +216,15 @@ static int set_forgedip_binding_resp(const struct stun_ctx *server,
 	resp[2] = (len >> 8) & 0xff;
 	resp[3] = len & 0xff;
 	packet_size += len + 20;
-	ret = libnet_build_udp(FORGED_PORT, htons(from->sin_port), packet_size, 0,
-			       resp, len + 20, l, 0);
+	ret = libnet_build_udp(forged_addr.port, htons(from->sin_port),
+			       packet_size, 0, resp, len + 20, l, 0);
 	if (ret < 0) {
 		fprintf(stderr, "libnet_build_udp() fail: %s\n",
 				libnet_geterror(l));
 		return -1;
 	}
 	ret = libnet_build_ipv4(packet_size + LIBNET_IPV4_H, 0, 0, 0, 255,
-				IPPROTO_UDP, 0, FORGED_IP,
+				IPPROTO_UDP, 0, forged_addr.ip,
 				from->sin_addr.s_addr, NULL, 0, l, 0);
 	if (ret < 0) {
 		fprintf(stderr, "libnet_build_ipv4() fail: %s\n",
@@ -265,7 +272,8 @@ static void read_cb(EV_P_ ev_io *w, int revents)
 	} else if (msg_hdr.type == BINDING_REQUEST &&
 		   get_change_request_attr(server->buf, len,
 			   	&is_change_ip, &is_change_port) == 0) {
-		ret = set_forgedip_binding_resp(server, &msg_hdr, &from);
+		ret = set_forgedip_binding_resp(server, &msg_hdr, &from,
+						is_change_ip, is_change_port);
 		if (ret < 0)
 			fprintf(stderr, "set_forgedip_binding_resp fail\n");
 	}
@@ -285,13 +293,14 @@ int main(int argc, char **argv)
 	stun_server.fd = init_server_UDP_fd(STUN_PORT, stun_server.addr.ip);
 	stun_server2.fd = init_server_UDP_fd(STUN_PORT+1, stun_server2.addr.ip);
 	assert(stun_server.fd > 0 && stun_server2.fd > 0);
-	stun_server.another = &stun_server2;
-	stun_server2.another = &stun_server;
 	if ((stun_server.addr.ip & 0xff) < 0xfe)
 		FORGED_IP = stun_server.addr.ip + 0x1000000;
 	else
 		FORGED_IP = stun_server.addr.ip - 0x1000000;
-	FORGED_PORT = stun_server2.addr.port;
+	stun_server.change_addr.ip = FORGED_IP;
+	stun_server.change_addr.port = stun_server2.addr.port;
+	stun_server2.change_addr.ip = stun_server2.addr.ip;
+	stun_server2.change_addr.port = stun_server2.addr.port + 1;
 
 	ev_io_init(&stun_server.io, read_cb, stun_server.fd, EV_READ);
 	ev_io_start(loop, &stun_server.io);
