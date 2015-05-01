@@ -7,10 +7,12 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <getopt.h>
 
 #include "stun.h"
 #include "utils.h"
 #include "bithacks.h"
+#include "cripple_log.h"
 
 #define STUN_PORT 3478
 
@@ -256,14 +258,8 @@ static void read_cb(EV_P_ ev_io *w, int revents)
 		return;
 	}
 	stun_msg_hdr_parse(server->buf, len, &msg_hdr);
-#if 0
-	fprintf(stderr, "hdr->type: %#x\n", msg_hdr.type);
-	fprintf(stderr, "hdr->len: %#x\n", msg_hdr.len);
-	int i;
-	for (i = 0; i < 16; i++) {
-		fprintf(stderr, "tr[%d]: %#x\n", i, msg_hdr.transaction_id[i]);
-	}
-#endif
+	cri_log("request from: %s, type: %d\n",
+		inet_ntoa(from.sin_addr), msg_hdr.type);
 	if (msg_hdr.type == BINDING_REQUEST && msg_hdr.len == 0) {
 		/* send Binding Resp msg */
 		len = set_binding_resp(server->buf, server, &msg_hdr, &from);
@@ -279,13 +275,45 @@ static void read_cb(EV_P_ ev_io *w, int revents)
 	}
 }
 
+static void usage(char **argv)
+{
+	fprintf(stderr, "Usage: %s [-b, --background]\n", argv[0]);
+}
+
 int main(int argc, char **argv)
 {
 	struct ev_loop *loop = EV_DEFAULT;
 	struct stun_ctx stun_server;
 	struct stun_ctx stun_server2;
 	uint32_t my_ip = get_first_network_addr();
+	int opt, index;
+	static struct option long_opts[] = {
+		{"help",        no_argument, 0, 'h'},
+		{"background",	no_argument, 0, 'b'},
+		{0, 0, 0, 0}
+	};
+	FILE *logfp;
 
+	while ((opt = getopt_long(argc, argv, "hb", long_opts, &index)) != -1) {
+		switch (opt) {
+		case 'b':
+			logfp = fopen("cripple.log", "a");
+			if (logfp == NULL) {
+				perror("fopen");
+				exit(1);
+			}
+			dup2(fileno(logfp), STDERR_FILENO);
+			fclose(logfp);
+			daemon(0, 1);
+			break;
+		case 0:
+		case 'h':
+		default:
+			usage(argv);
+			exit(0);
+		}
+	}
+	cri_log("cripple server init\n");
 	stun_server.addr.ip = my_ip;
 	stun_server2.addr.ip = my_ip;
 	stun_server.addr.port = STUN_PORT;

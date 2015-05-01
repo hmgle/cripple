@@ -6,7 +6,7 @@ TARGET = server client client_getchangeip_test $(LIBNET_TEST)
 
 all:: $(TARGET)
 
-server: server.o utils.o
+server: server.o utils.o cripple_log.o
 	$(CC) $(CFLAGS) $^ -o $@ -lnet -lev
 
 client: client.o
