@@ -126,7 +126,7 @@ def Test(s, host, port, source_ip, source_port, send_data=""):
             s.sendto(data,(host, port))
             try:
                 buf, addr = s.recvfrom(2048)
-                log.debug("recvfrom: %s" % addr)
+                log.debug("recvfrom: %s" % str(addr))
                 recieved = True
             except Exception:
                 recieved = False
