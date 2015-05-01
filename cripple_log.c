@@ -9,7 +9,7 @@ void cri_log(const char *fmt, ...)
 	size_t l;
 	char log_line[1024];
 	int ret;
-	time_t current_time;
+	time_t current_time = time(NULL);
 
 	va_start(ap, fmt);
 	tp = localtime(&current_time);
