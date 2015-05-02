@@ -35,7 +35,7 @@ import logging
 import optparse
 
 
-log = logging.getLogger("cripple_client")
+log = logging.getLogger("client")
 
 
 def enable_logging():
