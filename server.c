@@ -258,7 +258,7 @@ static void read_cb(EV_P_ ev_io *w, int revents)
 		return;
 	}
 	stun_msg_hdr_parse(server->buf, len, &msg_hdr);
-	cri_log("request from: %s, type: %d\n",
+	cri_log("request from: %s, type: %d",
 		inet_ntoa(from.sin_addr), msg_hdr.type);
 	if (msg_hdr.type == BINDING_REQUEST && msg_hdr.len == 0) {
 		/* send Binding Resp msg */
