@@ -3,6 +3,8 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <errno.h>
+#include <unistd.h>
+#include <stdlib.h>
 
 #include "utils.h"
 
@@ -52,6 +54,26 @@ int main(int argc, char **argv)
 {
 	struct forge_ip_server_ctx s;
 	struct ev_loop *loop = EV_DEFAULT;
+	int opt;
+	FILE *logfp;
+
+	while ((opt = getopt(argc, argv, "b")) != -1) {
+		switch (opt) {
+		case 'b':
+			logfp = fopen("forge_ip_server.log", "a");
+			if (logfp == NULL) {
+				perror("fopen");
+				exit(1);
+			}
+			dup2(fileno(logfp), STDERR_FILENO);
+			fclose(logfp);
+			daemon(0, 1);
+			break;
+		default:
+			fprintf(stderr, "usage: %s [-b]\n", argv[0]);
+			exit(1);
+		}
+	}
 
 	s.fd = init_server_UDP_fd(SERVER_PORT, 0);
 	assert(s.fd > 0);

@@ -19,7 +19,10 @@ static int send_forged_addr_msg(const struct sockaddr_in *forged,
 	libnet_ptag_t ret;
 	char errbuf[LIBNET_ERRBUF_SIZE];
 	libnet_t *l = libnet_init(LIBNET_RAW4, NULL, errbuf);
-	assert(l != NULL);
+	if (l == NULL) {
+		fprintf(stderr, "You need 'sudo' to run this!\n");
+		exit(1);
+	}
 
 	packet_size += LIBNET_UDP_H;
 	/* store real addr port */
