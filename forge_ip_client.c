@@ -140,7 +140,7 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 	struct timeval timeout = {
-		.tv_sec = 2,
+		.tv_sec = 3,
 		.tv_usec = 0,
 	};
 	setsockopt(cli_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
