@@ -1,0 +1,12 @@
+language: c
+
+compiler:
+  - gcc
+
+before_install:
+        - sudo apt-get update -qq
+
+install:
+        - sudo apt-get install -y libev-dev libnet1-dev libssl-dev
+
+script: make

@@ -1,5 +1,7 @@
 # cripple
 
+[![Build Status](https://travis-ci.org/hmgle/cripple.png?branch=master)](https://travis-ci.org/hmgle/cripple)
+
 cripple 是一个在 STUN (UDP 简单穿透 NAT) [RFC 3489](http://tools.ietf.org/html/rfc3489) 协议基础上修改的实现. 目前服务器仅对客户端的 Binding 请求回应.
 
 最大的特点是它仅需要一个网络接口就可以提供检测 NAT 类型服务了.
