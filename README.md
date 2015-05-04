@@ -1,45 +1,61 @@
-# Cripple
+# cripple
 
 [![Build Status](https://travis-ci.org/hmgle/cripple.png?branch=master)](https://travis-ci.org/hmgle/cripple)
 
-Cripple 是一个在 STUN (UDP 简单穿透 NAT) [RFC 3489](http://tools.ietf.org/html/rfc3489) 协议基础上修改的实现. 目前服务器仅对客户端的 Binding 请求回应.
+[中文](README_zh.md)
 
-最大的特点是它仅需要一个网络接口就可以提供检测 NAT 类型服务了.
+## Introduction
+
+Cripple is a server like stund based on STUN [RFC 3489](http://tools.ietf.org/html/rfc3489), but not fully compatible with STUN. It only need single public IP address to run the server. Now cripple only reply the Binding Requests. A client can get the NAT information via cripple service.
+
+## Feature Summary
+
+The biggest difference with stund is that cripple only need single network interface with public IP address to run server.
 
 ## Building
 
-要编译所有目标文件, 需安装依赖库:
+The following libraries need to install before build:
+
+- libev-dev
+- libnet1-dev
+- libssl-dev
+
+Debian/Ubuntu Installation:
 
 ```
-sudo apt-get install -y libev-dev libnet1-dev libssl-dev
+sudo apt-get install libev-dev libnet1-dev libssl-dev
 ```
 
-然后编译:
+Then run the following:
 
 ```
+git clone https://github.com/hmgle/cripple.git
+cd cripple
 make
 ```
 
-可执行文件说明:
+Summary for executable files:
 
-- `server`: 服务端, 类似 stund, 需 root 权限执行
-- `client.py`: 客户端, 类似 pystun
-- `forge_ip_server`: 提供检测伪造IP是否能发出的服务
-- `forge_ip_client`: 检测本机是否可以发出伪造IP的客户端, 需 root 权限执行
+- `server`: Like stund, need root privileges to run
+- `client.py`: Like pystun
+- `forge_ip_server`: It provide the service that detect Fake IP Address IP packet whether can be sent
+- `forge_ip_client`: It check the host if can send the Fake IP Address IP packet, need root privileges to run
 
 ## FAQ
 
-### 已经有 stund 了, 为什么还造这样一个轮子?
+### Stund server is already exists, why do you make this cripple?
 
-我想在我的 VPS 上运行自己的 stund, 以便获取我的网络信息后进行 UDP 打洞进行 P2P 通信.可是 stund 需要两个有公网地址的网卡才能运行. cripple 就是基于这样的需求产生的, 它可以让只有一个公网地址的主机也能提供客户端获取 NAT 映射后的地址信息的服务.
+I want to run my stund server on my VPS to help P2P communication, but this VPS only has one public IP address. As stund need two public IP address, cripple just need one, mean it can run on my VPS.
 
-### 它是如何实现单网卡提供 STUN 服务的?
+### How can it provide STUN service with single network interface? 
 
-服务端通过修改 IP 协议栈中的源 IP 地址信息, 伪造出另一个 IP 数据包, 用来回应客户端的 "change IP" 请求. 而客户端需要注意的是获取这个伪造地址的数据包后绝不要发任何请求给这个来源地址. 因此它**不兼容** STUN 协议, 目前客户端仅能用目录内的 `client.py` 来获取 NAT 信息, 而不能用 `pystun`.
+The server will modify the source IP in IP protocol stack, fake another IP address data packet to reply the "change IP" request from client. The client never send UDP data to the fake IP address, so it is **incompatible** the STUN protocol. You should use `client.py`, not `pystun`.
 
-### 我如何用它来得到自己的电脑位于何种类型的 NAT 之后?
+### How can I get the NAT type my host behind?
 
-你需要知道一台已经运行了 cripple 服务的主机地址. 我在搬瓦工运行了一个了呢, 不过网络可能不太稳定, 地址是: 138.128.215.119, 然后:
+Just run the `client.py`. I have run the cripple `server` on my VPS (138.128.215.119).
+
+Example:
 
 ```console
 $ ./client.py -H 138.128.215.119 # ./client.py -H 138.128.215.119 -i 你的IP更好
@@ -47,31 +63,32 @@ NAT Type: Symmetric NAT
 External IP: 58.251.211.73
 External Port: 7296
 ```
-呵呵, 很遗憾检测出这台主机位于对称型 NAT 之后:(
 
-### 我想运行自己的 cripple 服务器呢?
+See? Your host is behind the Symmetric NAT.
 
-首先你需要一台有公网地址的主机, 比如你租的 VPS. 确保网络服务商不会拦截伪造 IP 的数据包. 这可以通过 `forge_ip_client` 来检测. 我在搬瓦工已经跑了一个 `forge_ip_server`.
+### I want to run cripple server on my host.
+
+First make sure you host has a public IP address, e.g., VPS. Then make sure the ISP or firewall will not intercept Fake IP UPD data packets. It can check by this(I have run a `forge_ip_server` on my VPS 138.128.215.119):
 
 ```console
 $ sudo ./forge_ip_client -i 123.45.67.89 -s 138.128.215.119
-forged source port: 1234 ip: 123.45.67.89 # 收到这样的返回, 表示可以发出伪造数据包
+forged source port: 1234 ip: 123.45.67.89 # show this mean your host can send fake IP packet
 ```
 
-如果是这样的返回:
+But if this reply:
 
 ```console
 $ sudo ./forge_ip_client -i 123.45.67.89 -s 138.128.215.119
 Block!
 ```
-说明服务器没有返回消息, 要么是你的网络服务提供商或防火墙不允许异常 IP 网络包发出, 要么是中间过程丢包了.
+mean ISP or firewall intercept abnormal IP Packets.
 
-如果通过检测, 那么在这台主机上以超级用户身份继续运行 cripple 服务就可以了:
+After pass this check, then run the cripple with root:
 
 ```console
 $ sudo ./server -b
 ```
 
-## 授权协议
+## License
 
-MIT.
+Cripple is released under MIT License. See `LICENSE` for more information.
