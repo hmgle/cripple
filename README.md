@@ -1,8 +1,8 @@
-# cripple
+# Cripple
 
 [![Build Status](https://travis-ci.org/hmgle/cripple.png?branch=master)](https://travis-ci.org/hmgle/cripple)
 
-cripple 是一个在 STUN (UDP 简单穿透 NAT) [RFC 3489](http://tools.ietf.org/html/rfc3489) 协议基础上修改的实现. 目前服务器仅对客户端的 Binding 请求回应.
+Cripple 是一个在 STUN (UDP 简单穿透 NAT) [RFC 3489](http://tools.ietf.org/html/rfc3489) 协议基础上修改的实现. 目前服务器仅对客户端的 Binding 请求回应.
 
 最大的特点是它仅需要一个网络接口就可以提供检测 NAT 类型服务了.
 
@@ -24,7 +24,7 @@ make
 
 - `server`: 服务端, 类似 stund, 需 root 权限执行
 - `client.py`: 客户端, 类似 pystun
-- `forge_ip_server`: 提供检测伪造IP是否发出的服务
+- `forge_ip_server`: 提供检测伪造IP是否能发出的服务
 - `forge_ip_client`: 检测本机是否可以发出伪造IP的客户端, 需 root 权限执行
 
 ## FAQ
@@ -72,3 +72,6 @@ Block!
 $ sudo ./server -b
 ```
 
+## 授权协议
+
+MIT.
