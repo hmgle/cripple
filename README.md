@@ -1,4 +1,4 @@
-# cripple
+# Cripple
 
 [![Build Status](https://travis-ci.org/hmgle/cripple.png?branch=master)](https://travis-ci.org/hmgle/cripple)
 
@@ -18,12 +18,11 @@ The following libraries need to install before build:
 
 - libev-dev
 - libnet1-dev
-- libssl-dev
 
 Debian/Ubuntu Installation:
 
 ```
-sudo apt-get install libev-dev libnet1-dev libssl-dev
+sudo apt-get install libev-dev libnet1-dev
 ```
 
 Then run the following:

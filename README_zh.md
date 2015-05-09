@@ -11,7 +11,7 @@ Cripple 是一个在 STUN (UDP 简单穿透 NAT) [RFC 3489](http://tools.ietf.or
 要编译所有目标文件, 需安装依赖库:
 
 ```
-sudo apt-get install -y libev-dev libnet1-dev libssl-dev
+sudo apt-get install -y libev-dev libnet1-dev
 ```
 
 然后编译:
