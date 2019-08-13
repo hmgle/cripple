@@ -234,7 +234,7 @@ def GetNATType(s, source_ip, source_port, stun_host=None):
                     if exIP == ret['ExternalIP'] and exPort == ret['ExternalPort']:
                         changePortRequest = ''.join([ChangeRequest,'0004',"00000002"])
                         log.debug("Do Test3")
-                        ret = Test(s, host, changePort, source_ip, source_port, changePortRequest)
+                        ret = Test(s, host, changedPort, source_ip, source_port, changePortRequest)
                         log.debug("Result: %s" % ret)
                         if ret['Resp'] == True:
                             type = RestricNAT
