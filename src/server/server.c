@@ -10,7 +10,7 @@
 #include <getopt.h>
 
 #include "stun.h"
-#include "utils.h"
+#include <utils.h>
 #include "bithacks.h"
 #include "cripple_log.h"
 

@@ -17,7 +17,10 @@ sudo apt-get install -y libev-dev libnet1-dev
 然后编译:
 
 ```
-make
+git clone https://github.com/hmgle/cripple.git
+mkdir cripple/build && cd $_
+cmake ..
+cmake --build .
 ```
 
 可执行文件说明:

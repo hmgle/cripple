@@ -14,6 +14,14 @@ The biggest difference with stund is that cripple only need single network inter
 
 ## Building
 
+Start from this directory:
+```sh
+git clone https://github.com/hmgle/cripple.git
+cd cripple
+mkdir build
+cd build
+```
+
 The following libraries need to install before build:
 
 - libev-dev
@@ -21,16 +29,25 @@ The following libraries need to install before build:
 
 Debian/Ubuntu Installation:
 
-```
+```sh
 sudo apt-get install libev-dev libnet1-dev
 ```
 
-Then run the following:
+Then run the following when globally installed:
 
 ```
-git clone https://github.com/hmgle/cripple.git
-cd cripple
-make
+cmake ..
+```
+
+Or if [`vcpkg`](https://github.com/microsoft/vcpkg) is used then:
+```sh
+[path_to_vcpkg]/vcpkg install libevent
+cmake .. -DCMAKE_BUILD_TYPE='Debug' -DCMAKE_TOOLCHAIN_FILE='[path_to_vcpkg]/vcpkg/scripts/buildsystems/vcpkg.cmake'
+```
+
+Finally run:
+```sh
+cmake --build .
 ```
 
 Summary for executable files:
