@@ -8,7 +8,8 @@
 #include <stdarg.h>
 #include <string.h>
 #include <errno.h>
+#include "server_export.h"
 
-void cri_log(const char *fmt, ...);
+void SERVER_EXPORT cri_log(const char *fmt, ...);
 
 #endif
