@@ -2,6 +2,7 @@
 #define _STUN_H
 
 #include <stdint.h>
+#include "server_export.h"
 
 #define STUN_MAX_MESSAGE_SIZE	2048
 

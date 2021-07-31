@@ -4,8 +4,10 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <assert.h>
+#include <stdio.h>
+#include <string.h>
 
-#include "utils.h"
+#include <utils.h>
 
 #define SERVER_PORT 7899
 #define CLIENT_PORT 7999

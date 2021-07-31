@@ -1,0 +1,9 @@
+#ifndef CRIPPLE_CONFIG_H
+#define CRIPPLE_CONFIG_H
+
+/* the configured options and settings for cripple */
+#define CRIPPLE_VERSION_MAJOR @cripple_VERSION_MAJOR@
+#define CRIPPLE_VERSION_MINOR @cripple_VERSION_MINOR@
+#define CRIPPLE_VERSION_PATCH @cripple_VERSION_PATCH@
+
+#endif /* CRIPPLE_CONFIG_H */

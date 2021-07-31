@@ -9,3 +9,8 @@ tags
 
 *.log
 *.tmp
+
+.idea
+cmake-build-*
+build*
+*_export.h
