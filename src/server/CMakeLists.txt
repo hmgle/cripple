@@ -10,8 +10,6 @@ set(Source_Files "cripple_log.c" "server.c")
 source_group("Source Files" FILES "${Source_Files}")
 
 add_library("${EXEC_NAME}" "${Header_Files}" "${Source_Files}")
-find_package(Libevent CONFIG REQUIRED)
-target_link_libraries("${EXEC_NAME}" PRIVATE libevent::core libevent::extra libevent::pthreads)
 
 target_include_directories(
         "${EXEC_NAME}"
@@ -19,6 +17,12 @@ target_include_directories(
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>"
         "$<INSTALL_INTERFACE:include>"
 )
+
+set(CMAKE_MODULE_PATH cmake)
+find_package(LIBNET)
+find_package(Libev)
+target_include_directories("${EXEC_NAME}" PRIVATE "${LIBEV_INCLUDE_DIR}" "${LIBNET_INCLUDE_DIR}")
+target_link_libraries("${EXEC_NAME}" PRIVATE "${LIBEV_LIBRARIES}" "${LIBNET_LIBRARY}")
 
 target_link_libraries("${EXEC_NAME}" PUBLIC "${PROJECT_LOWER_NAME}_compiler_flags")
 

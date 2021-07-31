@@ -13,7 +13,7 @@
 #define SHARED_SECRET_RESPONSE		0x0102
 #define SHARED_SECRET_ERROR_RESPONSE	0x0112
 
-struct SERVER_EXPORT stun_msg_hdr {
+struct stun_msg_hdr {
 	uint16_t type;
 	uint16_t len;
 	uint8_t transaction_id[16];
@@ -31,7 +31,7 @@ struct SERVER_EXPORT stun_msg_hdr {
 #define UNKNOWN_ATTRI		0x000a
 #define REFLECTED_FRO		0x000b
 
-struct SERVER_EXPORT stun_msg_attr {
+struct stun_msg_attr {
 	uint16_t type;
 	uint16_t len;
 	uint8_t value[0];
